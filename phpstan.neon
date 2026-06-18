@@ -1,5 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
 parameters:
     level: 7
     paths:
         - src
+        # Fixture enums that `use Helpers`, so PHPStan resolves the trait in
+        # context. The Pest test files are excluded — their higher-order
+        # expectation chains aren't statically resolvable.
         - tests/TestEnum.php
+        - tests/IntTestEnum.php
+        - tests/PureTestEnum.php
