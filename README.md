@@ -2,9 +2,13 @@
 
 Convenient helper methods for PHP enums in Laravel applications.
 
-Drop the `Helpers` trait into any backed enum to get readable labels, select-ready
-option lists, expressive equality checks, and fluent conditional callbacks — all backed
-by Laravel's `Str` and translation helpers.
+Drop the `Helpers` trait into any enum to get readable labels, names/values/labels
+accessors, case lookups, select-ready option lists, a ready-made validation rule,
+random selection, expressive equality checks, and fluent conditional callbacks — all
+backed by Laravel's `Str` and translation helpers.
+
+Backed (string/int) enums get the full surface. Pure (non-backed) enums work too: any
+method that would read a backing value falls back to the case `name`.
 
 ## Requirements
 
@@ -24,7 +28,8 @@ provider, config, or migrations.
 
 ## Usage
 
-Add the `RoundlyConsulting\Enums\Helpers` trait to any backed (string or int) enum:
+Add the `RoundlyConsulting\Enums\Helpers` trait to any enum. Backed enums get every
+method; pure enums fall back to the case name where a value would be used:
 
 ```php
 use RoundlyConsulting\Enums\Helpers;
@@ -41,32 +46,108 @@ enum NewsCategory: string
 
 ### Readable labels
 
-`readable()` turns a case value into a human-friendly, translated label using
-`Str::headline()`. Because it passes through Laravel's `__()` helper, you can localise
-labels via your translation files.
+`readable()` turns a case into a human-friendly, translated label using `Str::headline()`.
+Because it passes through Laravel's `__()` helper, you can localise labels via your
+translation files. `label()` is an alias of `readable()`.
 
 ```php
 NewsCategory::HotNews->readable(); // "Hot News"
+NewsCategory::HotNews->label();    // "Hot News"
 ```
 
-### Storable values
-
-`storable()` returns a collection of the raw backed values, in declaration order — handy
-for validation rules or persisting allowed values.
+For a pure enum, `readable()` headlines the case name instead of a backing value:
 
 ```php
-NewsCategory::storable();
-// Illuminate\Support\Collection of ['hot-news', 'regular-news', 'private-news']
+enum Status { use Helpers; case Active; }
+
+Status::Active->readable(); // "Active"
+```
+
+### Names, values and labels
+
+Get every case's name, backed value, or readable label as a collection in declaration
+order.
+
+```php
+NewsCategory::names();   // ['HotNews', 'RegularNews', 'PrivateNews']
+NewsCategory::values();  // ['hot-news', 'regular-news', 'private-news']
+NewsCategory::labels();  // ['Hot News', 'Regular News', 'Private News']
+```
+
+`storable()` is the persistence-flavoured alias of `values()` — both return the raw
+backed values, handy for validation rules or persisting an allowed set.
+
+```php
+NewsCategory::storable(); // ['hot-news', 'regular-news', 'private-news']
+```
+
+`collect()` returns every case as a collection of enum instances, and `count()` is the
+number of cases.
+
+```php
+NewsCategory::collect(); // Collection<NewsCategory>
+NewsCategory::count();   // 3
 ```
 
 ### Select options
 
 `toOptions()` returns a `value => label` collection, ready for a `<select>` element or a
-form component.
+form component, and `toArray()` is its plain-array form for config or JSON.
 
 ```php
 NewsCategory::toOptions();
 // ['hot-news' => 'Hot News', 'regular-news' => 'Regular News', 'private-news' => 'Private News']
+
+NewsCategory::toArray(); // same data as a plain array
+```
+
+`options()` returns a list of typed `EnumOption` DTOs (`value`, `label`, `name`) — the
+shape JS/Inertia/React/Vue selects expect:
+
+```php
+NewsCategory::options();
+// Collection<EnumOption{ value: 'hot-news', label: 'Hot News', name: 'HotNews' }, ...>
+
+NewsCategory::options()->first()->toArray();
+// ['value' => 'hot-news', 'label' => 'Hot News', 'name' => 'HotNews']
+```
+
+### Case lookups
+
+Resolve a case from a `name`, a readable `label`, and check existence. The `from*`
+variants throw a `RoundlyConsulting\Enums\Exceptions\EnumException` when no case matches;
+the `tryFrom*` variants return `null` (and short-circuit on a `null` argument).
+
+```php
+NewsCategory::fromName('HotNews');       // NewsCategory::HotNews
+NewsCategory::tryFromName('Missing');    // null
+NewsCategory::tryFromName(null);         // null
+
+NewsCategory::fromLabel('Hot News');     // NewsCategory::HotNews
+NewsCategory::tryFromLabel('Nope');      // null
+
+NewsCategory::hasName('HotNews');        // true
+NewsCategory::hasValue('hot-news');      // true
+```
+
+### Validation
+
+`validationRule()` builds a Laravel `in:...` rule string from the backed values, so the
+allow-list never drifts when cases change.
+
+```php
+$request->validate([
+    'category' => ['required', NewsCategory::validationRule()],
+]);
+// validationRule() === 'in:hot-news,regular-news,private-news'
+```
+
+### Random selection
+
+`random()` returns a random case — handy for factories, seeders, and tests.
+
+```php
+NewsCategory::random(); // a random NewsCategory case
 ```
 
 ### Equality checks
