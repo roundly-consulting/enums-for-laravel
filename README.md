@@ -12,7 +12,7 @@ method that would read a backing value falls back to the case `name`.
 
 ## Requirements
 
-- PHP `^8.3`
+- PHP `^8.4`
 - Laravel `^12.0` or `^13.0` (via `illuminate/contracts`)
 
 ## Installation
