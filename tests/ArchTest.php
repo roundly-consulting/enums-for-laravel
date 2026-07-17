@@ -31,8 +31,7 @@ ArchPresets::strictTypes('RoundlyConsulting\Enums');
  * want to specialise). EnumOption stays final; Helpers is a trait, which `classes()`
  * does not consider.
  */
-ArchPresets::finalByDefault('RoundlyConsulting\Enums')
-    ->ignoring(EnumException::class);
+ArchPresets::finalByDefault('RoundlyConsulting\Enums', [EnumException::class]);
 
 /**
  * Enums does no cryptography. The ban is a standing guard against a hash- or
