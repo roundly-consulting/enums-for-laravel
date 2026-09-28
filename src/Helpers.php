@@ -248,10 +248,18 @@ trait Helpers
 
     /**
      * A human-friendly, translated label derived from the case value or name.
+     *
+     * The headline is looked up in the application's translator (JSON or group
+     * translations, current locale). When the lookup yields a whole translation
+     * group instead of a line — "Auth" names lang/en/auth.php on a case-insensitive
+     * filesystem — the untranslated headline is returned.
      */
     public function readable(): string
     {
-        return (string) Container::getInstance()->make('translator')->get(Str::headline((string) $this->backing()));
+        $headline = Str::headline((string) $this->backing());
+        $translated = Container::getInstance()->make('translator')->get($headline);
+
+        return is_string($translated) ? $translated : $headline;
     }
 
     /**

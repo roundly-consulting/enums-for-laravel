@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Lang;
+use RoundlyConsulting\Enums\Tests\AreaTestEnum;
 use RoundlyConsulting\Enums\Tests\IntTestEnum;
 use RoundlyConsulting\Enums\Tests\PureTestEnum;
 use RoundlyConsulting\Enums\Tests\TestEnum;
@@ -25,6 +26,15 @@ it('honours translation overrides for labels', function () {
     Lang::addLines(['*.Hot News' => 'Breaking'], 'en', '*');
 
     expect(TestEnum::HotNews->readable())->toBe('Breaking');
+});
+
+it('falls back to the headline when it names a translation group', function () {
+    Lang::addLines(['Auth.failed' => 'These credentials do not match our records.'], 'en');
+
+    expect(AreaTestEnum::Auth->readable())->toBe('Auth')
+        ->and(AreaTestEnum::labels()->all())->toBe(['Auth', 'Billing'])
+        ->and(AreaTestEnum::toArray())->toBe(['auth' => 'Auth', 'billing' => 'Billing'])
+        ->and(AreaTestEnum::fromLabel('Auth'))->toBe(AreaTestEnum::Auth);
 });
 
 it('translates labels through the container translator in the current locale', function () {
