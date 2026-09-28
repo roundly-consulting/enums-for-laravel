@@ -45,10 +45,19 @@ ArchPresets::noLocalCryptoPrimitives('RoundlyConsulting\Enums');
  * The Dependency Policy as a test, and the assertion that matters most on a leaf: enums
  * sits in the `require` of most of the fleet, so a third-party vendor entering here ships
  * transitively into every consumer of every consumer. No `alsoAllow` — enums' `require`
- * is php + illuminate/contracts, and the workflow installs test tooling with `--dev`, so
- * nothing legitimately lands in `require` that this must forgive. If it goes red the
- * graph is wrong; never widen the allow-list to quiet it.
+ * is php + illuminate/{contracts,container,support}, and the workflow installs test
+ * tooling with `--dev`, so nothing legitimately lands in `require` that this must
+ * forgive. If it goes red the graph is wrong; never widen the allow-list to quiet it.
  */
 ArchPresets::runtimeRequireIsWhitelisted(__DIR__.'/../composer.json');
 
 ArchPresets::noDebuggingLeftovers();
+
+/**
+ * The runtime `require` is php + illuminate/{contracts,container,support}. The foundation
+ * helpers (`__()`, `trans()`, `app()`, …) live in laravel/framework, which enums does not
+ * declare — using one would make the trait fatal wherever only the declared deps exist.
+ */
+arch('uses no laravel/framework foundation helpers')
+    ->expect('RoundlyConsulting\Enums')
+    ->not->toUse(['__', 'trans', 'trans_choice', 'app', 'resolve', 'config', 'lang_path']);

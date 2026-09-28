@@ -6,6 +6,7 @@ namespace RoundlyConsulting\Enums;
 
 use BackedEnum;
 use Closure;
+use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use RoundlyConsulting\Enums\DataTransferObjects\EnumOption;
@@ -250,7 +251,7 @@ trait Helpers
      */
     public function readable(): string
     {
-        return (string) __(Str::headline((string) $this->backing()));
+        return (string) Container::getInstance()->make('translator')->get(Str::headline((string) $this->backing()));
     }
 
     /**

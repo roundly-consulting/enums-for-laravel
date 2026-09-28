@@ -26,3 +26,11 @@ it('honours translation overrides for labels', function () {
 
     expect(TestEnum::HotNews->readable())->toBe('Breaking');
 });
+
+it('translates labels through the container translator in the current locale', function () {
+    Lang::addLines(['*.Hot News' => 'Horúce správy'], 'sk', '*');
+    app()->setLocale('sk');
+
+    expect(TestEnum::HotNews->readable())->toBe('Horúce správy')
+        ->and(TestEnum::RegularNews->readable())->toBe('Regular News');
+});
