@@ -24,15 +24,19 @@ Convenient helper methods for PHP enums in Laravel applications.
 Drop the `Helpers` trait into any enum to get readable labels, names/values/labels
 accessors, case lookups, select-ready option lists, a ready-made validation rule,
 random selection, expressive equality checks, and fluent conditional callbacks — all
-backed by Laravel's `Str` and translation helpers.
+backed by Laravel's `Str` helpers and translator.
 
 Backed (string/int) enums get the full surface. Pure (non-backed) enums work too: any
-method that would read a backing value falls back to the case `name`.
+method that would read a backing value — `values()`, `storable()`, `hasValue()`,
+`validationRule()`, `toOptions()`, `options()`, `readable()` — uses the case `name` instead.
 
 ## Requirements
 
 - PHP `^8.4`
-- Laravel `^12.0` or `^13.0` (via `illuminate/contracts`)
+- A Laravel `^12.0` or `^13.0` application. The package itself only requires
+  `illuminate/contracts`, `illuminate/container` and `illuminate/support`; labels are
+  translated through the application's `translator`, so label-producing methods need a
+  booted app.
 
 ## Installation
 
@@ -43,7 +47,8 @@ composer require roundly-consulting/enums-for-laravel
 ```
 
 There is nothing to publish or migrate — this is a trait-only package with no service
-provider, config, or migrations.
+provider, config, or migrations. There is no facade either: the helpers live on your own
+enums, so there is no stateful API to route through one.
 
 ## Usage
 
@@ -66,8 +71,10 @@ enum NewsCategory: string
 ### Readable labels
 
 `readable()` turns a case into a human-friendly, translated label using `Str::headline()`.
-Because it passes through Laravel's `__()` helper, you can localise labels via your
-translation files. `label()` is an alias of `readable()`.
+The headline is looked up in Laravel's translator (current locale), so you can localise
+labels via your translation files — for example `lang/sk.json` with
+`{"Hot News": "Horúce správy"}`. Without a matching translation the headline itself is
+returned. `label()` is an alias of `readable()`.
 
 ```php
 NewsCategory::HotNews->readable(); // "Hot News"
@@ -84,20 +91,26 @@ Status::Active->readable(); // "Active"
 
 ### Names, values and labels
 
-Get every case's name, backed value, or readable label as a collection in declaration
-order.
+Get every case's name, backed value, or readable label as an
+`Illuminate\Support\Collection` in declaration order (call `->all()` for a plain array).
 
 ```php
-NewsCategory::names();   // ['HotNews', 'RegularNews', 'PrivateNews']
-NewsCategory::values();  // ['hot-news', 'regular-news', 'private-news']
-NewsCategory::labels();  // ['Hot News', 'Regular News', 'Private News']
+NewsCategory::names()->all();   // ['HotNews', 'RegularNews', 'PrivateNews']
+NewsCategory::values()->all();  // ['hot-news', 'regular-news', 'private-news']
+NewsCategory::labels()->all();  // ['Hot News', 'Regular News', 'Private News']
 ```
 
 `storable()` is the persistence-flavoured alias of `values()` — both return the raw
 backed values, handy for validation rules or persisting an allowed set.
 
 ```php
-NewsCategory::storable(); // ['hot-news', 'regular-news', 'private-news']
+NewsCategory::storable()->all(); // ['hot-news', 'regular-news', 'private-news']
+```
+
+For a pure enum, the values are the case names:
+
+```php
+Status::values()->all(); // ['Active']
 ```
 
 `collect()` returns every case as a collection of enum instances, and `count()` is the
@@ -111,14 +124,19 @@ NewsCategory::count();   // 3
 ### Select options
 
 `toOptions()` returns a `value => label` collection, ready for a `<select>` element or a
-form component, and `toArray()` is its plain-array form for config or JSON.
+form component, and `toArray()` is its plain-array form for JSON and API responses.
 
 ```php
-NewsCategory::toOptions();
-// ['hot-news' => 'Hot News', 'regular-news' => 'Regular News', 'private-news' => 'Private News']
+NewsCategory::toOptions(); // Collection: 'hot-news' => 'Hot News', ...
 
-NewsCategory::toArray(); // same data as a plain array
+NewsCategory::toArray();
+// ['hot-news' => 'Hot News', 'regular-news' => 'Regular News', 'private-news' => 'Private News']
 ```
+
+Labels are translated, so build options at runtime (controllers, views, resources), not
+inside a `config/*.php` file: config loads before the translator exists, and a cached
+config would freeze the labels in one locale. A config file can hold the translation-free
+`NewsCategory::values()->all()` instead.
 
 `options()` returns a list of typed `EnumOption` DTOs (`value`, `label`, `name`) — the
 shape JS/Inertia/React/Vue selects expect:
@@ -146,13 +164,13 @@ NewsCategory::fromLabel('Hot News');     // NewsCategory::HotNews
 NewsCategory::tryFromLabel('Nope');      // null
 
 NewsCategory::hasName('HotNews');        // true
-NewsCategory::hasValue('hot-news');      // true
+NewsCategory::hasValue('hot-news');      // true (strict: '5' never matches an int-backed 5)
 ```
 
 ### Validation
 
-`validationRule()` builds a Laravel `in:...` rule string from the backed values, so the
-allow-list never drifts when cases change.
+`validationRule()` builds a Laravel `in:...` rule string from `values()` (the case names
+for a pure enum), so the allow-list never drifts when cases change.
 
 ```php
 $request->validate([
@@ -160,6 +178,10 @@ $request->validate([
 ]);
 // validationRule() === 'in:hot-news,regular-news,private-news'
 ```
+
+A value that would break the rule's comma-separated syntax — one containing a comma or
+starting with a double quote — is quoted (e.g. `'in:"a,b",c'`), so it validates exactly.
+Pass the rule as an array element, as above, rather than inside a `|`-delimited string.
 
 ### Random selection
 

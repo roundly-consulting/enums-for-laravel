@@ -19,7 +19,8 @@ Initial public release.
   returning typed `EnumOption` objects for JS front ends.
 - Case lookups by name or label (`fromName()`, `tryFromName()`, `fromLabel()`, `tryFromLabel()`)
   and existence checks (`hasName()`, `hasValue()`).
-- `validationRule()`, an `in:` rule built from the backed values so it never drifts from the enum.
+- `validationRule()`, an `in:` rule built from `values()` so it never drifts from the enum (values
+  that would break the rule's comma syntax are quoted).
 - `random()` for factories, seeders and tests.
 - Equality checks (`is()`, `isNot()`, `isIn()`, `isNotIn()`) and fluent conditional callbacks
   (`whenIs()`, `whenIsNot()`, `whenIsIn()`, `whenIsNotIn()`).
