@@ -118,7 +118,7 @@ trait Helpers
     }
 
     /**
-     * The plain-array form of toOptions(), for config or JSON output.
+     * The plain-array form of toOptions(), for JSON or API output (labels need the translator).
      *
      * @return array<array-key, string>
      */
