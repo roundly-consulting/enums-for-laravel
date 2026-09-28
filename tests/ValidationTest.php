@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Validator;
 use RoundlyConsulting\Enums\Tests\IntTestEnum;
 use RoundlyConsulting\Enums\Tests\PureTestEnum;
+use RoundlyConsulting\Enums\Tests\SeparatorTestEnum;
 use RoundlyConsulting\Enums\Tests\TestEnum;
 
 it('builds an in: validation rule from the backed values', function () {
@@ -45,4 +46,25 @@ it('accepts every case of a pure enum and rejects anything else', function (stri
     'Active' => ['Active', true],
     'Archived' => ['Archived', true],
     'unknown name' => ['Deleted', false],
+]);
+
+it('quotes only the values that collide with the in: syntax', function () {
+    expect(SeparatorTestEnum::validationRule())->toBe('in:"a,b",say "hi","""q",c');
+});
+
+it('validates backed values containing separators exactly', function (string $input, bool $passes) {
+    $validator = Validator::make(
+        ['value' => $input],
+        ['value' => ['required', SeparatorTestEnum::validationRule()]],
+    );
+
+    expect($validator->passes())->toBe($passes);
+})->with([
+    'comma value' => ['a,b', true],
+    'quote value' => ['say "hi"', true],
+    'leading quote value' => ['"q', true],
+    'plain value' => ['c', true],
+    'left half of the comma value' => ['a', false],
+    'right half of the comma value' => ['b', false],
+    'unquoted leading quote' => ['q', false],
 ]);

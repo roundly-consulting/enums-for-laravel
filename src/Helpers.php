@@ -224,11 +224,25 @@ trait Helpers
     }
 
     /**
-     * A Laravel "in:..." validation rule string built from the backed values.
+     * A Laravel "in:..." validation rule string built from values().
+     *
+     * Laravel reads the list back as CSV, so a value that would not survive that
+     * (an empty one, one containing a comma, or one starting with a double quote)
+     * is quoted with its inner quotes doubled; every other value stays bare, as in
+     * 'in:draft,"a,b",final'. Pass it as an array element, not inside a
+     * pipe-delimited rule string, when a value contains "|".
      */
     public static function validationRule(): string
     {
-        return 'in:'.self::values()->implode(',');
+        return 'in:'.self::values()
+            ->map(static function (string|int $value): string {
+                $value = (string) $value;
+
+                return str_getcsv($value, escape: '\\') === [$value]
+                    ? $value
+                    : '"'.str_replace('"', '""', $value).'"';
+            })
+            ->implode(',');
     }
 
     /**
