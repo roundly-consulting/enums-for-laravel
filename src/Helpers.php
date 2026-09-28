@@ -14,8 +14,8 @@ use RoundlyConsulting\Enums\Exceptions\EnumException;
 /**
  * Convenience helpers for PHP enums.
  *
- * Designed for backed enums, but every label/name based method also works on
- * pure (non-backed) enums by falling back to the case name:
+ * Designed for backed enums, but every method also works on pure (non-backed)
+ * enums: wherever a backed value would be read, the case name is used instead.
  *
  * ```php
  * enum Status: string
@@ -27,17 +27,19 @@ use RoundlyConsulting\Enums\Exceptions\EnumException;
 trait Helpers
 {
     /**
-     * The raw backed values of every case, in declaration order.
+     * The raw backed values of every case (case names for pure enums), in declaration order.
      *
      * @return Collection<int, string|int>
      */
     public static function storable(): Collection
     {
-        return (new Collection(static::cases()))->pluck('value')->values();
+        return (new Collection(static::cases()))
+            ->map(static fn (self $enum): string|int => $enum->backing())
+            ->values();
     }
 
     /**
-     * The backed values of every case — the conventional sibling of storable().
+     * The backed values of every case (case names for pure enums) — the conventional sibling of storable().
      *
      * @return Collection<int, string|int>
      */
@@ -207,12 +209,13 @@ trait Helpers
     }
 
     /**
-     * Whether a case with the given backed value exists.
+     * Whether a case with the given backed value (case name for pure enums) exists.
+     * The comparison is strict: '5' does not match an int-backed 5.
      */
     public static function hasValue(string|int $value): bool
     {
         foreach (static::cases() as $case) {
-            if ($case instanceof BackedEnum && $case->value === $value) {
+            if ($case->backing() === $value) {
                 return true;
             }
         }

@@ -49,6 +49,12 @@ it('reports whether a backed value exists', function () {
         ->and(IntTestEnum::hasValue(99))->toBeFalse();
 });
 
-it('returns false for hasValue on pure enums', function () {
-    expect(PureTestEnum::hasValue('Active'))->toBeFalse();
+it('matches the case name for hasValue on pure enums', function () {
+    expect(PureTestEnum::hasValue('Active'))->toBeTrue()
+        ->and(PureTestEnum::hasValue('Deleted'))->toBeFalse();
+});
+
+it('compares values strictly', function () {
+    expect(IntTestEnum::hasValue('5'))->toBeFalse()
+        ->and(TestEnum::hasValue('Hot-News'))->toBeFalse();
 });

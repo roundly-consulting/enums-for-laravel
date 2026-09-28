@@ -23,6 +23,11 @@ it('returns int-backed values', function () {
         ->toArray()->toBe([0, 5, 10]);
 });
 
+it('returns case names as values and storable for pure enums', function () {
+    expect(PureTestEnum::values()->all())->toBe(['Active', 'Archived'])
+        ->and(PureTestEnum::storable()->all())->toBe(['Active', 'Archived']);
+});
+
 it('returns labels for each case', function () {
     expect(TestEnum::labels())
         ->toBeCollection()
