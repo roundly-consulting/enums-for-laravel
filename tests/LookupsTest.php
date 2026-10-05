@@ -6,6 +6,7 @@ use RoundlyConsulting\Enums\Exceptions\EnumException;
 use RoundlyConsulting\Enums\Tests\IntTestEnum;
 use RoundlyConsulting\Enums\Tests\PureTestEnum;
 use RoundlyConsulting\Enums\Tests\TestEnum;
+use RoundlyConsulting\Enums\Tests\TwinLabelTestEnum;
 
 it('resolves a case by name', function () {
     expect(TestEnum::fromName('HotNews'))->toBe(TestEnum::HotNews)
@@ -57,4 +58,10 @@ it('matches the case name for hasValue on pure enums', function () {
 it('compares values strictly', function () {
     expect(IntTestEnum::hasValue('5'))->toBeFalse()
         ->and(TestEnum::hasValue('Hot-News'))->toBeFalse();
+});
+
+it('resolves a label shared by several cases to the first declared one', function () {
+    expect(TwinLabelTestEnum::labels()->all())->toBe(['In Progress', 'In Progress'])
+        ->and(TwinLabelTestEnum::fromLabel('In Progress'))->toBe(TwinLabelTestEnum::Hyphen)
+        ->and(TwinLabelTestEnum::tryFromLabel('In Progress'))->toBe(TwinLabelTestEnum::Hyphen);
 });

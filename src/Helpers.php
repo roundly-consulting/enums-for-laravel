@@ -180,6 +180,7 @@ trait Helpers
 
     /**
      * Resolve a case by its readable label, throwing when none matches.
+     * When several cases share a label, the first declared case wins.
      *
      * @throws EnumException
      */
@@ -191,6 +192,7 @@ trait Helpers
 
     /**
      * Resolve a case by its readable label, or null when none matches.
+     * When several cases share a label, the first declared case wins.
      */
     public static function tryFromLabel(?string $label): ?static
     {
