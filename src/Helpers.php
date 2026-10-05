@@ -249,6 +249,9 @@ trait Helpers
     /**
      * A human-friendly, translated label derived from the case value or name.
      *
+     * An int value is its own headline ('0', '-1'); a string value or case name goes
+     * through Str::headline() with its '0' parts kept ('level-0' is 'Level 0').
+     *
      * The headline is looked up in the application's translator (JSON or group
      * translations, current locale). When the lookup yields a whole translation
      * group instead of a line — "Auth" names lang/en/auth.php on a case-insensitive
@@ -256,7 +259,25 @@ trait Helpers
      */
     public function readable(): string
     {
-        $headline = Str::headline((string) $this->backing());
+        $backing = $this->backing();
+
+        if (is_int($backing)) {
+            // An int is its own label: Str::headline() reads '-' as a separator and drops a
+            // '0' part, so 0 came out blank and -1 collided with 1.
+            $headline = (string) $backing;
+        } else {
+            // Str::headline() also drops any part that is exactly '0' ('level-0' became
+            // 'Level'). A private-use code point stands in for '0' during the call: like a
+            // digit it is uncased, no capital and no separator, so the framework splits and
+            // title-cases exactly as before and only the lost '0' parts come back. A value
+            // already holding that code point keeps the plain headline.
+            $zero = "\u{E000}";
+
+            $headline = str_contains($backing, $zero)
+                ? Str::headline($backing)
+                : str_replace($zero, '0', Str::headline(str_replace('0', $zero, $backing)));
+        }
+
         $translated = Container::getInstance()->make('translator')->get($headline);
 
         return is_string($translated) ? $translated : $headline;

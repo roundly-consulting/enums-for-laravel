@@ -5,8 +5,11 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Lang;
 use RoundlyConsulting\Enums\Tests\AreaTestEnum;
 use RoundlyConsulting\Enums\Tests\IntTestEnum;
+use RoundlyConsulting\Enums\Tests\PrivateUseTestEnum;
 use RoundlyConsulting\Enums\Tests\PureTestEnum;
+use RoundlyConsulting\Enums\Tests\SignedIntTestEnum;
 use RoundlyConsulting\Enums\Tests\TestEnum;
+use RoundlyConsulting\Enums\Tests\ZeroPartTestEnum;
 
 it('returns a readable label for backed enums', function () {
     expect(TestEnum::HotNews->readable())->toBe('Hot News')
@@ -43,4 +46,26 @@ it('translates labels through the container translator in the current locale', f
 
     expect(TestEnum::HotNews->readable())->toBe('Horúce správy')
         ->and(TestEnum::RegularNews->readable())->toBe('Regular News');
+});
+
+it('labels an int zero as "0"', function () {
+    expect(IntTestEnum::Low->readable())->toBe('0')
+        ->and(IntTestEnum::toArray())->toBe([0 => '0', 5 => '5', 10 => '10'])
+        ->and(IntTestEnum::fromLabel('0'))->toBe(IntTestEnum::Low);
+});
+
+it('keeps the sign of a negative int label', function () {
+    expect(SignedIntTestEnum::labels()->all())->toBe(['-1', '1'])
+        ->and(SignedIntTestEnum::fromLabel('1'))->toBe(SignedIntTestEnum::Plus)
+        ->and(SignedIntTestEnum::fromLabel('-1'))->toBe(SignedIntTestEnum::Minus);
+});
+
+it('keeps "0" parts of string values in the label', function () {
+    expect(ZeroPartTestEnum::labels()->all())
+        ->toBe(['Level', 'Level 0', 'Level 10', 'V1 0 0', 'Room 0', '0 Floor'])
+        ->and(ZeroPartTestEnum::fromLabel('Level 0'))->toBe(ZeroPartTestEnum::LevelZero);
+});
+
+it('leaves a value already holding the zero mask to the plain headline', function () {
+    expect(PrivateUseTestEnum::Masked->readable())->toBe("\u{E000} 1");
 });
