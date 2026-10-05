@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Validator;
+use RoundlyConsulting\Enums\Exceptions\EnumException;
+use RoundlyConsulting\Enums\Tests\BackslashTestEnum;
 use RoundlyConsulting\Enums\Tests\IntTestEnum;
 use RoundlyConsulting\Enums\Tests\PureTestEnum;
 use RoundlyConsulting\Enums\Tests\SeparatorTestEnum;
@@ -68,3 +70,32 @@ it('validates backed values containing separators exactly', function (string $in
     'right half of the comma value' => ['b', false],
     'unquoted leading quote' => ['q', false],
 ]);
+
+it('builds a rule that reads back as exactly the values when they hold backslashes', function () {
+    $rule = BackslashTestEnum::validationRule();
+
+    expect($rule)->toBe('in:"C:\a,b"\,"x\"y,z",z')
+        ->and(str_getcsv(substr($rule, 3), escape: '\\'))->toBe(['C:\a,b\\', 'x\"y,z', 'z']);
+});
+
+it('validates backed values holding backslashes exactly', function (string $input, bool $passes) {
+    $validator = Validator::make(
+        ['value' => $input],
+        ['value' => ['required', BackslashTestEnum::validationRule()]],
+    );
+
+    expect($validator->passes())->toBe($passes);
+})->with([
+    'trailing backslash value' => ['C:\a,b\\', true],
+    'escaped quote value' => ['x\"y,z', true],
+    'plain value' => ['z', true],
+    'trailing backslash value glued to the next one' => ['C:\a,b\",z', false],
+    'left half of the escaped quote value' => ['x\"y', false],
+    'right half of the escaped quote value' => ['z"', false],
+]);
+
+it('names the enum and the value it cannot write into the rule', function () {
+    expect(EnumException::valueNotRepresentable(BackslashTestEnum::class, 'C:\a,b\\'))
+        ->toBeInstanceOf(EnumException::class)
+        ->getMessage()->toBe('Value [C:\a,b\\] of enum ['.BackslashTestEnum::class.'] cannot be written into an in: rule that reads back unchanged; validate it with Rule::enum() instead.');
+});

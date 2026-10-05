@@ -232,16 +232,33 @@ trait Helpers
      * is quoted with its inner quotes doubled; every other value stays bare, as in
      * 'in:draft,"a,b",final'. Pass it as an array element, not inside a
      * pipe-delimited rule string, when a value contains "|".
+     *
+     * @throws EnumException when no CSV form of a value reads back unchanged
      */
     public static function validationRule(): string
     {
-        return 'in:'.self::values()
-            ->map(static function (string|int $value): string {
-                $value = (string) $value;
+        // Inside quotes Laravel's parser (str_getcsv, escape '\') keeps a backslash and
+        // the character after it verbatim, so a quote right after a backslash must not be
+        // doubled, and a trailing backslash would escape the closing quote. Text after a
+        // closing quote is kept up to the next comma, so that trailing run goes there.
+        $quote = static fn (string $text): string => '"'.preg_replace_callback(
+            '/\\\\.|"/s',
+            static fn (array $match): string => $match[0] === '"' ? '""' : $match[0],
+            $text,
+        ).'"';
 
-                return str_getcsv($value, escape: '\\') === [$value]
-                    ? $value
-                    : '"'.str_replace('"', '""', $value).'"';
+        return 'in:'.self::values()
+            ->map(static function (string|int $value) use ($quote): string {
+                $value = (string) $value;
+                $body = rtrim($value, '\\');
+
+                foreach ([$value, $quote($value), $quote($body).substr($value, strlen($body))] as $form) {
+                    if (str_getcsv($form, escape: '\\') === [$value]) {
+                        return $form;
+                    }
+                }
+
+                throw EnumException::valueNotRepresentable(static::class, $value);
             })
             ->implode(',');
     }
