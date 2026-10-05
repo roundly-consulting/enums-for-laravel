@@ -6,26 +6,32 @@ All notable changes to `enums-for-laravel` are documented in this file. The form
 
 ## Unreleased
 
+## 1.0.1 - 2026-10-05
+
 ### Changed
 
+- Labels no longer drop a `0` or a minus sign. In `readable()` / `label()` and everything built on
+  them (`labels()`, `toOptions()`, `toArray()`, `options()`, `fromLabel()`), an int `0` is
+  labelled `'0'` instead of `''`, and a negative int keeps its sign, so `-1` no longer collides
+  with `1`. A `0` part of a string value or case name is kept too: `'level-0'` is `'Level 0'`,
+  not `'Level'`. Every other label is unchanged. Upgrade: re-key any translation keyed on an old
+  label (the blank `''` for `0`, `'1'` for `-1`, `'Level'` for `'level-0'`).
+- `random()` on an enum with no cases throws `EnumException::noCases()` instead of PHP's
+  `ValueError`, so it can be caught along with the package's other errors. Upgrade: catch
+  `EnumException` where you caught that `ValueError`.
+- Maintenance: `composer.json` `homepage` and `support.docs` now point to the documentation site.
 - Documentation: `fromLabel()` and `tryFromLabel()` now state that when several cases share a label,
   the first declared case wins.
+- Documentation: the README banner uses an absolute image URL, so it also renders on Packagist and
+  other sites.
 
 ### Fixed
 
-- Labels no longer lose digits. In `readable()` / `label()` and everything built on them
-  (`labels()`, `toOptions()`, `toArray()`, `options()`, `fromLabel()`), an int `0` is labelled
-  `'0'` instead of `''`, and a negative int keeps its sign, so `-1` no longer collides with `1`.
-  A `0` part of a string value or case name is kept too: `'level-0'` is `'Level 0'`, not
-  `'Level'`. Every other label is unchanged. If you have translations keyed on an old label (the
-  blank `''` for `0`, `'1'` for `-1`, `'Level'` for `'level-0'`), re-key them to the new one.
 - `validationRule()` now reads back exactly for string values that need quoting and have a backslash
   before a quote or at the end (e.g. `x\"y,z`, `C:\a,b\`). Before, the rule rejected those values
   and could accept a value that isn't in the enum. Rules for every other enum are unchanged. If a
   value ever had no CSV form that reads back unchanged, the method would throw
   `EnumException::valueNotRepresentable()` rather than return a wrong rule.
-- `random()` on an enum with no cases throws `EnumException::noCases()` instead of PHP's
-  `ValueError`, so it can be caught along with the package's other errors.
 
 ## 1.0.0 - 2026-10-03
 
