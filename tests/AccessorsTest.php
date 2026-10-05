@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use RoundlyConsulting\Enums\Exceptions\EnumException;
+use RoundlyConsulting\Enums\Tests\EmptyTestEnum;
 use RoundlyConsulting\Enums\Tests\IntTestEnum;
 use RoundlyConsulting\Enums\Tests\PureTestEnum;
 use RoundlyConsulting\Enums\Tests\TestEnum;
@@ -53,4 +55,9 @@ it('returns a random case that is always a real member', function () {
     foreach (range(1, 20) as $ignored) {
         expect(TestEnum::cases())->toContain(TestEnum::random());
     }
+});
+
+it('throws an enum exception when picking a random case of an enum without cases', function () {
+    expect(fn () => EmptyTestEnum::random())
+        ->toThrow(EnumException::class, 'Enum ['.EmptyTestEnum::class.'] has no cases.');
 });

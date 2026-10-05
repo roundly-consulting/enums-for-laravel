@@ -97,9 +97,15 @@ trait Helpers
 
     /**
      * A random case.
+     *
+     * @throws EnumException when the enum declares no cases
      */
     public static function random(): static
     {
+        if (self::count() === 0) {
+            throw EnumException::noCases(static::class);
+        }
+
         $cases = static::cases();
 
         return $cases[array_rand($cases)];

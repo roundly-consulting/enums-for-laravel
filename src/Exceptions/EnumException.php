@@ -18,6 +18,11 @@ class EnumException extends InvalidArgumentException
         return new self("No case with label [{$label}] exists on enum [{$enum}].");
     }
 
+    public static function noCases(string $enum): self
+    {
+        return new self("Enum [{$enum}] has no cases.");
+    }
+
     public static function valueNotRepresentable(string $enum, string $value): self
     {
         return new self("Value [{$value}] of enum [{$enum}] cannot be written into an in: rule that reads back unchanged; validate it with Rule::enum() instead.");
