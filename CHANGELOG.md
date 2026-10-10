@@ -6,6 +6,8 @@ All notable changes to `enums-for-laravel` are documented in this file. The form
 
 ## Unreleased
 
+## 1.1.0 - 2026-10-10
+
 ### Added
 
 - `#[TranslatedLabels]` attribute: an enum that carries it reads each label from a translation
