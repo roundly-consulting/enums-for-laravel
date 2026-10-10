@@ -20,8 +20,8 @@ it('adds trait methods only under names no fleet enum declares', function () {
     // silently replaces it. 1.0.1's set, plus only the names scanned clean across the fleet.
     expect($methods)->toBe([
         'backing', 'collect', 'count', 'fromLabel', 'fromName', 'hasName', 'hasValue', 'is',
-        'isIn', 'isNot', 'isNotIn', 'label', 'labels', 'names', 'options', 'random', 'readable',
-        'storable', 'toArray', 'toOptions', 'tryFromLabel', 'tryFromName', 'untranslated',
+        'isIn', 'isNot', 'isNotIn', 'label', 'labels', 'names', 'options', 'presentation',
+        'presentations', 'random', 'readable', 'storable', 'toArray', 'toOptions', 'tryFromLabel', 'tryFromName', 'untranslated',
         'validationRule', 'values', 'whenIs', 'whenIsIn', 'whenIsNot', 'whenIsNotIn',
     ]);
 });

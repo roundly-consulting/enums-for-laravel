@@ -9,7 +9,9 @@ use Closure;
 use Illuminate\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use RoundlyConsulting\Enums\Contracts\HasColor;
 use RoundlyConsulting\Enums\DataTransferObjects\EnumOption;
+use RoundlyConsulting\Enums\DataTransferObjects\EnumPresentation;
 use RoundlyConsulting\Enums\Exceptions\EnumException;
 use RoundlyConsulting\Enums\Support\LabelGroups;
 
@@ -147,6 +149,19 @@ trait Helpers
                 label: $enum->readable(),
                 name: $enum->name,
             ))
+            ->values();
+    }
+
+    /**
+     * A {value, label, color} presentation DTO for every case, in declaration order, for
+     * badges and status chips. Each one comes from presentation().
+     *
+     * @return Collection<int, EnumPresentation>
+     */
+    public static function presentations(): Collection
+    {
+        return (new Collection(static::cases()))
+            ->map(static fn (self $enum): EnumPresentation => $enum->presentation())
             ->values();
     }
 
@@ -310,9 +325,9 @@ trait Helpers
      * A human-friendly, translated label derived from the case value or name.
      *
      * This is the one place labels come from: labels(), toOptions(), toArray(), options(),
-     * fromLabel(), tryFromLabel() and label() all call it. To customise a
-     * label, override readable(), never label() — an override of label() alone leaves
-     * every list showing the old label.
+     * fromLabel(), tryFromLabel(), label(), presentation() and presentations() all call
+     * it. To customise a label, override readable(), never label() — an override of
+     * label() alone leaves every list showing the old label.
      *
      * On an enum marked #[TranslatedLabels], the line "<group>.<value>" (the case name for
      * pure enums) comes first, in the current locale and then fallback_locale. A value
@@ -362,6 +377,19 @@ trait Helpers
         $translated = $translator->get($headline);
 
         return is_string($translated) ? $translated : $headline;
+    }
+
+    /**
+     * The case as a {value, label, color} DTO: the backed value (the case name for pure
+     * enums), readable(), and color() when the enum implements HasColor, otherwise null.
+     */
+    public function presentation(): EnumPresentation
+    {
+        return new EnumPresentation(
+            value: $this->backing(),
+            label: $this->readable(),
+            color: $this instanceof HasColor ? $this->color() : null,
+        );
     }
 
     /**

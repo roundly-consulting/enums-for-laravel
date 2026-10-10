@@ -21,6 +21,13 @@ All notable changes to `enums-for-laravel` are documented in this file. The form
 - `EnumException::invalidLabelGroup()`, thrown when the attribute names a blank group or one that
   starts or ends with whitespace, `.` or `:`, and `EnumException::labelsNotTranslated()`, thrown by
   `untranslated()` on an enum without the attribute.
+- `HasColor` contract (`color(): string`) for enums whose cases carry a display colour: a badge
+  variant, CSS class or hex code, passed through as-is. It is opt-in, so an enum's existing
+  `color()` method keeps working until the enum implements it.
+- `presentation()` and `presentations()`: one case, or every case in declaration order, as an
+  `EnumPresentation` DTO (`value`, translated `label`, `color`). It serialises to
+  `{value, label, color}` through `toArray()` / `json_encode()`; `color` is `null` without
+  `HasColor`. `options()` keeps its `{value, label, name}` shape.
 
 ### Changed
 

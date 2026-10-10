@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use RoundlyConsulting\Enums\Exceptions\EnumException;
+use RoundlyConsulting\Enums\Helpers;
 use RoundlyConsulting\Testing\Arch\ArchPresets;
 
 /**
@@ -10,8 +11,9 @@ use RoundlyConsulting\Testing\Arch\ArchPresets;
  * except the last is a new guard rather than a replacement.
  *
  * This package is a Tier-0 leaf: no service provider, no config file, no migrations, no
- * models — a trait, a DTO and an exception. Two of the seven presets therefore do not
- * apply and are deliberately **not** registered rather than added for symmetry:
+ * models — a trait, an attribute, a contract, two DTOs, an internal label-group reader
+ * and an exception. Two of the seven presets therefore do not apply and are deliberately
+ * **not** registered rather than added for symmetry:
  *
  *   - `swappableModelsAreNotFinal` — there is no config-swappable model, and no config
  *     file to swap one through. The preset takes a non-empty map; a package with nothing
@@ -28,8 +30,9 @@ ArchPresets::strictTypes('RoundlyConsulting\Enums');
 /**
  * One deliberate extension point is exempt: EnumException, the base every enums error
  * extends so a host can catch them uniformly (and whose named constructors a host may
- * want to specialise). EnumOption stays final; Helpers is a trait, which `classes()`
- * does not consider.
+ * want to specialise). EnumOption, EnumPresentation, TranslatedLabels and LabelGroups
+ * stay final; Helpers is a trait and HasColor an interface, which `classes()` does not
+ * consider.
  */
 ArchPresets::finalByDefault('RoundlyConsulting\Enums', [EnumException::class]);
 
@@ -61,3 +64,12 @@ ArchPresets::noDebuggingLeftovers();
 arch('uses no laravel/framework foundation helpers')
     ->expect('RoundlyConsulting\Enums')
     ->not->toUse(['__', 'trans', 'trans_choice', 'app', 'resolve', 'config', 'lang_path']);
+
+/**
+ * color() is opt-in through the HasColor interface and never a trait method: 77 Cosmos and 2
+ * fleet enums already declare a color() of their own, some with other return types, and a
+ * trait method would collide with every one of them.
+ */
+test('the Helpers trait declares no color method', function () {
+    expect((new ReflectionClass(Helpers::class))->hasMethod('color'))->toBeFalse();
+});

@@ -14,3 +14,6 @@ parameters:
         - tests/Fixtures/ToolAuth.php
         - tests/Fixtures/Priority.php
         - tests/Fixtures/Visibility.php
+        - tests/Fixtures/BadgeStatus.php
+        - tests/Fixtures/Lane.php
+        - tests/Fixtures/LegacyColor.php
