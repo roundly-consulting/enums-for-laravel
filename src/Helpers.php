@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use RoundlyConsulting\Enums\DataTransferObjects\EnumOption;
 use RoundlyConsulting\Enums\Exceptions\EnumException;
+use RoundlyConsulting\Enums\Support\LabelGroups;
 
 /**
  * Convenience helpers for PHP enums.
@@ -150,6 +151,40 @@ trait Helpers
     }
 
     /**
+     * The cases whose #[TranslatedLabels] key has no line in the given locale (the current
+     * one by default), in declaration order — for a test that pins every label translated:
+     *
+     * ```php
+     * expect(OrderStatus::untranslated('sk'))->toBeEmpty();
+     * ```
+     *
+     * The check is strict per locale: a line in fallback_locale does not count. That holds
+     * for Laravel's translator; one without hasForLocale() is asked through get(), so its
+     * fallback locale counts. A key that resolves to a nested group, or a value holding a
+     * ".", is reported, since readable() cannot use it either.
+     *
+     * @return Collection<int, static>
+     *
+     * @throws EnumException when the enum has no #[TranslatedLabels] attribute
+     */
+    public static function untranslated(?string $locale = null): Collection
+    {
+        $group = LabelGroups::for(static::class) ?? throw EnumException::labelsNotTranslated(static::class);
+        $translator = Container::getInstance()->make('translator');
+        $locale ??= $translator->getLocale();
+
+        $missing = new Collection;
+
+        foreach (static::cases() as $case) {
+            if (! LabelGroups::hasLine($translator, $group, $case->backing(), $locale)) {
+                $missing->push($case);
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
      * Resolve a case by its name, throwing when none matches.
      *
      * @throws EnumException
@@ -274,17 +309,38 @@ trait Helpers
     /**
      * A human-friendly, translated label derived from the case value or name.
      *
-     * An int value is its own headline ('0', '-1'); a string value or case name goes
-     * through Str::headline() with its '0' parts kept ('level-0' is 'Level 0').
+     * This is the one place labels come from: labels(), toOptions(), toArray(), options(),
+     * fromLabel(), tryFromLabel() and label() all call it. To customise a
+     * label, override readable(), never label() — an override of label() alone leaves
+     * every list showing the old label.
      *
-     * The headline is looked up in the application's translator (JSON or group
-     * translations, current locale). When the lookup yields a whole translation
-     * group instead of a line — "Auth" names lang/en/auth.php on a case-insensitive
-     * filesystem — the untranslated headline is returned.
+     * On an enum marked #[TranslatedLabels], the line "<group>.<value>" (the case name for
+     * pure enums) comes first, in the current locale and then fallback_locale. A value
+     * holding a "." can never match, because the translator reads the dot as nesting.
+     *
+     * Otherwise, or when that key has no line, the label is the headline: an int value is
+     * its own headline ('0', '-1'); a string value or case name goes through
+     * Str::headline() with its '0' parts kept ('level-0' is 'Level 0'). The headline is
+     * looked up in the application's translator (JSON or group translations, current
+     * locale). When the lookup yields a whole translation group instead of a line —
+     * "Auth" names lang/en/auth.php on a case-insensitive filesystem — the untranslated
+     * headline is returned.
+     *
+     * @throws EnumException when #[TranslatedLabels] names an invalid group
      */
     public function readable(): string
     {
         $backing = $this->backing();
+        $translator = Container::getInstance()->make('translator');
+        $group = LabelGroups::for(static::class);
+
+        if ($group !== null) {
+            $line = LabelGroups::line($translator, $group, $backing);
+
+            if ($line !== null) {
+                return $line;
+            }
+        }
 
         if (is_int($backing)) {
             // An int is its own label: Str::headline() reads '-' as a separator and drops a
@@ -303,13 +359,15 @@ trait Helpers
                 : str_replace($zero, '0', Str::headline(str_replace('0', $zero, $backing)));
         }
 
-        $translated = Container::getInstance()->make('translator')->get($headline);
+        $translated = $translator->get($headline);
 
         return is_string($translated) ? $translated : $headline;
     }
 
     /**
      * An alias of readable() — the term most UI code uses.
+     *
+     * Override readable(), not this: the lists (labels(), options(), …) read readable().
      */
     public function label(): string
     {

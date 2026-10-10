@@ -27,4 +27,14 @@ class EnumException extends InvalidArgumentException
     {
         return new self("Value [{$value}] of enum [{$enum}] cannot be written into an in: rule that reads back unchanged; validate it with Rule::enum() instead.");
     }
+
+    public static function invalidLabelGroup(string $enum, string $group): self
+    {
+        return new self("Enum [{$enum}] declares an invalid #[TranslatedLabels] group [{$group}]: a group must not be blank or start or end with whitespace, '.' or ':'.");
+    }
+
+    public static function labelsNotTranslated(string $enum): self
+    {
+        return new self("Enum [{$enum}] has no #[TranslatedLabels] attribute, so it has no translation keys to check.");
+    }
 }

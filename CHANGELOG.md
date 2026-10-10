@@ -6,6 +6,27 @@ All notable changes to `enums-for-laravel` are documented in this file. The form
 
 ## Unreleased
 
+### Added
+
+- `#[TranslatedLabels]` attribute: an enum that carries it reads each label from a translation
+  group, `<group>.<value>` (the case name for pure enums), instead of its headline. The default
+  group is `enums.` plus the snake_case class name (`OrderStatus` reads `enums.order_status.*`);
+  pass one for anything else, including a package's own files (`'billing::enums.order_status'`).
+  Every list built on labels (`labels()`, `toOptions()`, `toArray()`, `options()`, `fromLabel()`)
+  translates with it. A case with no line falls back to `fallback_locale`, then to the headline
+  label as before. Enums without the attribute are unchanged.
+- `untranslated(?string $locale = null)`: the cases of a `#[TranslatedLabels]` enum that have no
+  line in exactly that locale, for a test such as
+  `expect(OrderStatus::untranslated('sk'))->toBeEmpty()`.
+- `EnumException::invalidLabelGroup()`, thrown when the attribute names a blank group or one that
+  starts or ends with whitespace, `.` or `:`, and `EnumException::labelsNotTranslated()`, thrown by
+  `untranslated()` on an enum without the attribute.
+
+### Changed
+
+- Documentation: `readable()` is the one method to override for a custom label; `label()` is its
+  alias, and the lists read `readable()`, so overriding `label()` alone leaves them untranslated.
+
 ## 1.0.1 - 2026-10-05
 
 ### Changed

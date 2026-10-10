@@ -11,3 +11,6 @@ parameters:
         - tests/TestEnum.php
         - tests/IntTestEnum.php
         - tests/PureTestEnum.php
+        - tests/Fixtures/ToolAuth.php
+        - tests/Fixtures/Priority.php
+        - tests/Fixtures/Visibility.php
