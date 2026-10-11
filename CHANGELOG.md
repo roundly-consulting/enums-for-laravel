@@ -6,6 +6,10 @@ All notable changes to `enums-for-laravel` are documented in this file. The form
 
 ## Unreleased
 
+### Changed
+
+- Maintenance: requires the latest roundly packages — dev: testing `^1.2.1`.
+
 ## 1.1.0 - 2026-10-10
 
 ### Added
